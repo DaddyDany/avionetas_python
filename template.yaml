@@ -1,0 +1,150 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  dummy_app
+
+  Sample SAM Template for dummy_app
+
+Globals:
+  Function:
+    Timeout: 120
+    MemorySize: 256
+  Api:
+    Cors:
+      AllowMethods: "'GET,POST,PUT,DELETE,OPTIONS'"
+      AllowHeaders: "'*'"
+      AllowOrigin: "'*'"
+
+Resources:
+
+  LambdaExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: LambdaBasicExecution
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - logs:CreateLogGroup
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                Resource: arn:aws:logs:*:*:*
+
+  InsertAvionetaFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: modules/avioneta/insert_avioneta/
+      Handler: app.lambda_handler
+      Runtime: python3.12
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Architectures:
+        - x86_64
+      Events:
+        InsertAvioneta:
+          Type: Api
+          Properties:
+            RestApiId: !Ref AvionetasApi
+            Path: /insert_avioneta
+            Method: post
+
+  GetAllAvionetasFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: modules/avioneta/get_all_avionetas/
+      Handler: app.lambda_handler
+      Runtime: python3.12
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Architectures:
+        - x86_64
+      Events:
+        GetAllAvionetas:
+          Type: Api
+          Properties:
+            RestApiId: !Ref AvionetasApi
+            Path: /get_all_avionetas
+            Method: get
+
+  EditAvionetaFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: modules/avioneta/edit_avioneta/
+      Handler: app.lambda_handler
+      Runtime: python3.12
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Architectures:
+        - x86_64
+      Events:
+        EditAvioneta:
+          Type: Api
+          Properties:
+            RestApiId: !Ref AvionetasApi
+            Path: /edit_avioneta
+            Method: put
+
+  DeleteAvionetaFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: modules/avioneta/delete_avioneta/
+      Handler: app.lambda_handler
+      Runtime: python3.12
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Architectures:
+        - x86_64
+      Events:
+        DeleteAvioneta:
+          Type: Api
+          Properties:
+            RestApiId: !Ref AvionetasApi
+            Path: /delete_avioneta
+            Method: delete
+
+  AvionetasApi:
+    Type: AWS::Serverless::Api
+    Properties:
+      Name: AvionetasApi
+      StageName: Prod
+      Cors:
+        AllowMethods: "'GET,POST,PUT,DELETE,OPTIONS'"
+        AllowHeaders: "'*'"
+        AllowOrigin: "'*'"
+
+Outputs:
+  LambdaExecutionRoleArn:
+    Description: "Implicit IAM Role created for Lambda function"
+    Value: !GetAtt LambdaExecutionRole.Arn
+
+  InsertAvionetaApiUrl:
+    Description: "API Gateway endpoint URL for Prod stage for Insert Avioneta function"
+    Value: !Sub "https://${AvionetasApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/insert_avioneta/"
+  GetAllAvionetasApiUrl:
+    Description: "API Gateway endpoint URL for Prod stage for Get All Avionetas function"
+    Value: !Sub "https://${AvionetasApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/get_all_avionetas/"
+  EditAvionetaApiUrl:
+    Description: "API Gateway endpoint URL for Prod stage for Edit Avioneta function"
+    Value: !Sub "https://${AvionetasApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/edit_avioneta/"
+  DeleteAvionetaApiUrl:
+    Description: "API Gateway endpoint URL for Prod stage for Delete Avioneta function"
+    Value: !Sub "https://${AvionetasApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/delete_avioneta/"
+
+
+  InsertAvionetaFunctionArn:
+    Description: "Insert Avioneta Lambda Function ARN"
+    Value: !GetAtt InsertAvionetaFunction.Arn
+  GetAllAvionetasFunctionArn:
+    Description: "Get All Avionetas Lambda Function ARN"
+    Value: !GetAtt GetAllAvionetasFunction.Arn
+  EditAvionetaFunctionArn:
+    Description: "Edit Avioneta Lambda Function ARN"
+    Value: !GetAtt EditAvionetaFunction.Arn
+  DeleteAvionetaFunctionArn:
+    Description: "Delete Avioneta Lambda Function ARN"
+    Value: !GetAtt DeleteAvionetaFunction.Arn
